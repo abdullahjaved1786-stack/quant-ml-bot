@@ -1,0 +1,10 @@
+# Quant ML Trading Bot — Phase 1 (Spot / Paper Trading)
+# Install with:  python -m pip install -r requirements.txt
+pandas
+numpy
+scikit-learn
+lightgbm
+ccxt
+yfinance
+gspread
+python-dotenv

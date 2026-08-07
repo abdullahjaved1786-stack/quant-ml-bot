@@ -1,0 +1,37 @@
+[Unit]
+Description=Quant ML Trading Bot (24/7 paper trading)
+Documentation=https://github.com/your-org/quant-ml-bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=quant
+Group=quant
+WorkingDirectory=/opt/quant-ml-bot
+Environment=PYTHONUNBUFFERED=1
+Environment=GOOGLE_SHEET_NAME=
+Environment=GOOGLE_SHEET_CREDS=/opt/quant-ml-bot/secrets/gcp.json
+EnvironmentFile=-/opt/quant-ml-bot/.env
+
+ExecStart=/opt/quant-ml-bot/.venv/bin/python -u main.py --source ccxt --symbol BTC/USDT --timeframe 5m --poll 300
+ExecStop=/bin/kill -SIGINT $MAINPID
+Restart=on-failure
+RestartSec=15s
+TimeoutStopSec=30s
+KillSignal=SIGINT
+KillMode=mixed
+
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/quant-ml-bot/data /opt/quant-ml-bot/.venv
+LimitNOFILE=65535
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=quant-bot
+
+[Install]
+WantedBy=multi-user.target

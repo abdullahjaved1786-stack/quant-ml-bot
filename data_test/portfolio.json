@@ -1,0 +1,18 @@
+{
+  "starting_cash_usd": 10000.0,
+  "cash_usd": 9900.0,
+  "positions": [
+    {
+      "symbol": "BTC/USDT",
+      "side": "BUY",
+      "entry_price": 100.0,
+      "size": 1.0,
+      "tp_price": 110.0,
+      "sl_price": 95.0,
+      "entry_time": "2026-08-07T08:40:10.226384+00:00",
+      "position_id": "6c659492ba99",
+      "bars_held": 0,
+      "remaining_size": 1.0
+    }
+  ]
+}

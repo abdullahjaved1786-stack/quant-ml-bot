@@ -7,13 +7,15 @@ import spaces
 def zero_gpu_initializer():
     return "ZeroGPU Active"
 
+# Prepare Google Credentials file if secret is provided
 if "GOOGLE_SHEET_CREDS" in os.environ and os.environ["GOOGLE_SHEET_CREDS"].startswith("{"):
     with open("credentials.json", "w") as f:
         f.write(os.environ["GOOGLE_SHEET_CREDS"])
     os.environ["GOOGLE_SHEET_CREDS"] = "credentials.json"
 
 def start_trading_bot():
-    os.system('python main.py --source ccxt --symbol "BTC/USDT" --timeframe 5m --poll 300')
+    # Switched exchange to kraken to avoid Binance US geo-blocking (HTTP 451)
+    os.system('python main.py --source ccxt --exchange kraken --symbol "BTC/USDT" --timeframe 5m --poll 300')
 
 threading.Thread(target=start_trading_bot, daemon=True).start()
 

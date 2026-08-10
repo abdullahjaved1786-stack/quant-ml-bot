@@ -7,9 +7,11 @@ import pandas as pd
 
 from core.labeling import SL_ATR, TP_ATR
 
-FEE_RATE = 0.00075  # per-side fee as a fraction of price (0.075%)
-SLIPPAGE_BPS = 1.0  # per-side slippage in basis points of price
+FEE_RATE = 0.001  # per-side taker fee as a fraction of price (0.1%)
+SLIPPAGE_BPS = 2.0  # per-side slippage in basis points of price (2 bp)
 P_TP_THRESHOLD = 0.55  # minimum P(TP) to take a BUY
+MIN_TP_DISTANCE = 250.0  # floor on TP distance (price units) so gross gains clear costs
+MIN_WARMUP_BARS = 1000  # require this many training rows before signal evaluation
 
 
 class SignalModel:
@@ -19,6 +21,7 @@ class SignalModel:
     def __init__(self, estimator=None, **params):
         self.model = estimator if estimator is not None else self._default_estimator(**params)
         self.feature_columns = None
+        self._trained_rows = 0
 
     @staticmethod
     def _default_estimator(**params):
@@ -45,6 +48,7 @@ class SignalModel:
         y = y.reset_index(drop=True) if isinstance(y, pd.Series) else np.asarray(y)
         self.feature_columns = list(X.columns) if isinstance(X, pd.DataFrame) else None
         self.model.fit(X, y)
+        self._trained_rows = int(np.asarray(X).shape[0])
         return self
 
     def predict_proba(self, X):
@@ -60,13 +64,32 @@ class SignalModel:
     def signal(self, X_row, price, atr, slippage_bps=SLIPPAGE_BPS):
         """Expected edge = (P(TP)*TP_dist) - (P(SL)*SL_dist) - round-trip costs.
 
+        TP_dist is floored at MIN_TP_DISTANCE so a small ATR never produces a
+        take-profit that transaction costs can wipe out.
         Costs = 2 * (price * FEE_RATE + slippage)  [open + close legs].
         Returns "BUY" only if edge > 0 and P(TP) > P_TP_THRESHOLD, else "SIT_OUT".
+
+        If fewer than MIN_WARMUP_BARS rows have been seen during train(), a
+        SIT_OUT/WARMUP response is returned to avoid evaluating on noisy
+        statistics from a too-short training window.
 
         Accepts DataFrame, list, or ndarray for X_row. Re-wraps NumPy/list inputs
         as a DataFrame using stored feature_columns so LightGBM's fit-feature
         names match and the UserWarning is silenced.
         """
+        if self._trained_rows < MIN_WARMUP_BARS:
+            return {
+                "signal": "SIT_OUT",
+                "reason": "WARMUP",
+                "price": float(price),
+                "p_tp": 0.0,
+                "p_sl": 0.0,
+                "p_time": 1.0,
+                "edge": 0.0,
+                "tp_price": float(price + max(TP_ATR * float(atr), MIN_TP_DISTANCE)),
+                "sl_price": float(price - SL_ATR * float(atr)),
+            }
+
         if isinstance(X_row, pd.DataFrame):
             X = X_row
         elif self.feature_columns is not None:
@@ -75,7 +98,8 @@ class SignalModel:
         else:
             X = np.asarray(X_row, dtype=float).reshape(1, -1)
         p_tp, p_sl = self.predict_proba(X)
-        tp_dist, sl_dist = TP_ATR * atr, SL_ATR * atr
+        tp_dist = max(TP_ATR * atr, MIN_TP_DISTANCE)
+        sl_dist = SL_ATR * atr
         slippage = price * slippage_bps / 10_000.0
         costs = 2.0 * (price * FEE_RATE + slippage)
         edge = (p_tp[0] * tp_dist) - (p_sl[0] * sl_dist) - costs

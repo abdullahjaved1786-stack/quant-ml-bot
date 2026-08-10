@@ -41,7 +41,7 @@ def fetch_bars(cfg: dict):
         return fetch_live_ohlcv(
             symbol=cfg["symbol"],
             timeframe=cfg.get("timeframe", "5m"),
-            limit=cfg.get("limit", 500),
+            limit=cfg.get("limit", TRAIN_WINDOW),
             exchange_id=cfg.get("exchange") or "binance",
         )
     return load_ohlcv(

@@ -26,9 +26,9 @@ jobs:
 
     - name: Run Trading Bot
       env:
-        KRAKEN_API_KEY: ${{ secrets.KRAKEN_API_KEY }}
-        KRAKEN_SECRET: ${{ secrets.KRAKEN_SECRET }}
         BINANCE_API_KEY: ${{ secrets.BINANCE_API_KEY }}
         BINANCE_SECRET: ${{ secrets.BINANCE_SECRET }}
+        GOOGLE_SHEET_NAME: ${{ secrets.GOOGLE_SHEET_NAME }}
+        GOOGLE_SHEET_CREDS: ${{ secrets.GOOGLE_SHEET_CREDS }}
       run: |
         python main.py --interval 5m

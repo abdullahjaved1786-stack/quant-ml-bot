@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import argparse
 import os
-import time
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -189,21 +188,12 @@ def main() -> None:
     data_dir = Path(args.data_dir)
     bot = PaperBot(vars(args), data_dir=data_dir)
 
-    if args.once:
+    log.info("Running scheduled trading cycle via GitHub Actions...")
+    try:
         sig = run_once(bot, vars(args))
-        log.info("Single-pass signal: %s (P(TP)=%.3f edge=%.4f)", sig["signal"], sig["p_tp"], sig["edge"])
-        return
-
-    log.info("Paper-trading %s every %ss — Ctrl+C to stop.", args.symbol, args.poll)
-    while True:
-        try:
-            run_once(bot, vars(args))
-        except KeyboardInterrupt:
-            log.info("Stopped.")
-            break
-        except Exception as exc:
-            log.error("Poll failed: %s", exc)
-        time.sleep(args.poll)
+        log.info("Cycle complete. Signal: %s (P(TP)=%.3f edge=%.4f)", sig["signal"], sig["p_tp"], sig["edge"])
+    except Exception as exc:
+        log.error("Execution failed: %s", exc)
 
 
 if __name__ == "__main__":

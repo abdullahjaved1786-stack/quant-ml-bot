@@ -29,4 +29,4 @@ jobs:
         KRAKEN_API_KEY: ${{ secrets.KRAKEN_API_KEY }}
         KRAKEN_SECRET: ${{ secrets.KRAKEN_SECRET }}
       run: |
-        python main.py
+        python main.py --interval 5m

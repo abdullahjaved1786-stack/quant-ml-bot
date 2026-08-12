@@ -1,8 +1,7 @@
-"""Paper-trading execution loop with periodic walk-forward retraining.
+"""Paper-trading execution loop configured for 5-minute intervals in GitHub Actions.
 
-Fetches fresh OHLCV on each poll, rebuilds features + triple-barrier labels,
-retrains every RETRAIN_EVERY new bars on a rolling TRAIN_WINDOW (no arbitrary
-sample weighting), and logs a BUY / SIT_OUT decision for the latest bar.
+Fetches fresh 5m OHLCV data, rebuilds features + triple-barrier labels,
+retrains on a rolling TRAIN_WINDOW, and logs a single BUY / SIT_OUT decision.
 """
 
 from __future__ import annotations
@@ -46,10 +45,10 @@ def fetch_bars(cfg: dict):
     return load_ohlcv(
         cfg["symbol"],
         source=cfg.get("source", "yfinance"),
-        interval=cfg.get("interval", "1d"),
+        interval=cfg.get("interval", "5m"),
         limit=cfg.get("limit", TRAIN_WINDOW + 200),
         exchange=cfg.get("exchange"),
-        timeframe=cfg.get("timeframe", "1h"),
+        timeframe=cfg.get("timeframe", "5m"),
     )
 
 
@@ -172,10 +171,10 @@ def run_once(bot: PaperBot, cfg: dict) -> dict:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--symbol", default="BTC-USD")
-    ap.add_argument("--interval", default="1d", help="yfinance interval (1h, 1d, ...)")
+    ap.add_argument("--interval", default="5m", help="yfinance interval (5m, 1h, 1d, ...)")
     ap.add_argument("--source", choices=["yfinance", "ccxt"], default="yfinance")
     ap.add_argument("--exchange", default="binance", help="ccxt exchange id when --source ccxt")
-    ap.add_argument("--timeframe", default="1h", help="ccxt timeframe when --source ccxt")
+    ap.add_argument("--timeframe", default="5m", help="ccxt timeframe when --source ccxt")
     ap.add_argument("--limit", type=int, default=TRAIN_WINDOW + 200, help="bars to fetch per poll")
     ap.add_argument("--poll", type=int, default=POLL_SECONDS, help="seconds between polls")
     ap.add_argument("--once", action="store_true", help="run a single iteration and exit")
@@ -188,7 +187,7 @@ def main() -> None:
     data_dir = Path(args.data_dir)
     bot = PaperBot(vars(args), data_dir=data_dir)
 
-    log.info("Running scheduled trading cycle via GitHub Actions...")
+    log.info("Running scheduled 5m trading cycle via GitHub Actions...")
     try:
         sig = run_once(bot, vars(args))
         log.info("Cycle complete. Signal: %s (P(TP)=%.3f edge=%.4f)", sig["signal"], sig["p_tp"], sig["edge"])

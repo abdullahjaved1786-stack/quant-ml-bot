@@ -31,4 +31,5 @@ jobs:
         GOOGLE_SHEET_NAME: ${{ secrets.GOOGLE_SHEET_NAME }}
         GOOGLE_SHEET_CREDS: ${{ secrets.GOOGLE_SHEET_CREDS }}
       run: |
-        python app.py
+        echo "$GOOGLE_SHEET_CREDS" | tr -d '\r' > credentials.json
+        python main.py --interval 5m --creds-path credentials.json

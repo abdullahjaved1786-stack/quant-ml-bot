@@ -11,10 +11,10 @@ jobs:
 
     steps:
     - name: Checkout Repository
-      uses: actions/checkout@v4
+      uses: actions/checkout@v7
 
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v7
       with:
         python-version: '3.10'
         cache: 'pip'
@@ -28,5 +28,7 @@ jobs:
       env:
         KRAKEN_API_KEY: ${{ secrets.KRAKEN_API_KEY }}
         KRAKEN_SECRET: ${{ secrets.KRAKEN_SECRET }}
+        BINANCE_API_KEY: ${{ secrets.BINANCE_API_KEY }}
+        BINANCE_SECRET: ${{ secrets.BINANCE_SECRET }}
       run: |
         python main.py --interval 5m
